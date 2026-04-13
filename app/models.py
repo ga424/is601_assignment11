@@ -1,79 +1,85 @@
+from datetime import datetime
 import uuid
 
-from sqlalchemy import Column, Float, String
-from sqlalchemy.orm import declarative_base
+from sqlalchemy import Column, DateTime, Float, JSON, String
 
-Base = declarative_base()
+from app.database import Base
 
 
 class Calculation(Base):
     __tablename__ = "calculations"
 
-    id = Column(
-        String,
-        primary_key=True,
-        index=True,
-        unique=True,
-        nullable=False,
-        default=lambda: str(uuid.uuid4()),
-    )
-    calculation_type = Column(String)
-    operand1 = Column(Float, nullable=False)
-    operand2 = Column(Float, nullable=False)
-    userid = Column(String, nullable=False)
-    result = Column(Float, nullable=False)
+    id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
+    type = Column(String(50), nullable=False, index=True)
+    inputs = Column(JSON, nullable=False)
+    result = Column(Float, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     __mapper_args__ = {
+        "polymorphic_on": type,
         "polymorphic_identity": "calculation",
-        "polymorphic_on": calculation_type,
     }
 
-    @classmethod
-    def create(
-        cls,
-        calculation_type: str,
-        operand1: float,
-        operand2: float,
-        userid: str,
-        result: float,
-    ):
-        return cls(
-            calculation_type=calculation_type,
-            operand1=operand1,
-            operand2=operand2,
-            userid=userid,
-            result=result,
-        )
+    @property
+    def a(self) -> float:
+        return float(self.inputs[0])
 
-    def get_result(self):
-        raise NotImplementedError("Subclass must implement get_result")
+    @property
+    def b(self) -> float:
+        return float(self.inputs[1])
+
+    @classmethod
+    def create(cls, calculation_type: str, inputs: list[float]) -> "Calculation":
+        calculation_classes = {
+            "addition": Addition,
+            "subtraction": Subtraction,
+            "multiplication": Multiplication,
+            "division": Division,
+        }
+        calculation_class = calculation_classes.get(calculation_type.lower())
+        if not calculation_class:
+            raise ValueError(f"Unsupported calculation type: {calculation_type}")
+        return calculation_class(inputs=inputs)
+
+    def get_result(self) -> float:
+        raise NotImplementedError("Subclasses must implement get_result()")
 
 
 class Addition(Calculation):
     __mapper_args__ = {"polymorphic_identity": "addition"}
 
-    def get_result(self):
-        return self.operand1 + self.operand2
+    def get_result(self) -> float:
+        return sum(self.inputs)
 
 
 class Subtraction(Calculation):
     __mapper_args__ = {"polymorphic_identity": "subtraction"}
 
-    def get_result(self):
-        return self.operand1 - self.operand2
+    def get_result(self) -> float:
+        result = self.inputs[0]
+        for value in self.inputs[1:]:
+            result -= value
+        return result
 
 
 class Multiplication(Calculation):
     __mapper_args__ = {"polymorphic_identity": "multiplication"}
 
-    def get_result(self):
-        return self.operand1 * self.operand2
+    def get_result(self) -> float:
+        result = 1.0
+        for value in self.inputs:
+            result *= value
+        return result
 
 
 class Division(Calculation):
     __mapper_args__ = {"polymorphic_identity": "division"}
 
-    def get_result(self):
-        if self.operand2 == 0:
-            raise ZeroDivisionError("Cannot divide by zero")
-        return self.operand1 / self.operand2
+    def get_result(self) -> float:
+        result = self.inputs[0]
+        for value in self.inputs[1:]:
+            if value == 0:
+                raise ValueError("Cannot divide by zero")
+            result /= value
+        return result
