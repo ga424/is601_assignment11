@@ -11,5 +11,6 @@ build/
 dist/
 .env
 .env.*
+module11.db
 .DS_Store
 .vscode/
