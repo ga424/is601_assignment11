@@ -10,6 +10,8 @@ class Calculation(Base):
     __tablename__ = "calculations"
 
     id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
+    a = Column(Float, nullable=False)
+    b = Column(Float, nullable=False)
     type = Column(String(50), nullable=False, index=True)
     inputs = Column(JSON, nullable=False)
     result = Column(Float, nullable=True)
@@ -21,16 +23,11 @@ class Calculation(Base):
         "polymorphic_identity": "calculation",
     }
 
-    @property
-    def a(self) -> float:
-        return float(self.inputs[0])
-
-    @property
-    def b(self) -> float:
-        return float(self.inputs[1])
-
     @classmethod
     def create(cls, calculation_type: str, inputs: list[float]) -> "Calculation":
+        if len(inputs) < 2:
+            raise ValueError("At least two input values are required")
+
         calculation_classes = {
             "addition": Addition,
             "subtraction": Subtraction,
@@ -40,7 +37,7 @@ class Calculation(Base):
         calculation_class = calculation_classes.get(calculation_type.lower())
         if not calculation_class:
             raise ValueError(f"Unsupported calculation type: {calculation_type}")
-        return calculation_class(inputs=inputs)
+        return calculation_class(inputs=inputs, a=float(inputs[0]), b=float(inputs[1]))
 
     def get_result(self) -> float:
         raise NotImplementedError("Subclasses must implement get_result()")

@@ -26,6 +26,8 @@ def test_calculate_success(client, payload, expected_result, expected_class):
     data = response.json()
     assert data["type"] == expected_class
     assert data["inputs"] == [float(v) for v in payload["inputs"]]
+    assert data["a"] == float(payload["inputs"][0])
+    assert data["b"] == float(payload["inputs"][1])
     assert data["result"] == expected_result
     assert data["id"]
     assert data["created_at"]

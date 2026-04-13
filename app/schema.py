@@ -31,6 +31,8 @@ class CalculationCreate(BaseModel):
 
 class CalculationRead(BaseModel):
     id: str
+    a: float
+    b: float
     type: CalculationType
     inputs: list[float]
     result: float
