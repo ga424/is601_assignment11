@@ -26,6 +26,10 @@ Commands:
     shell       Open a shell in the app container
     help        Show this help message
 
+Docs:
+    README      Project overview: README.md
+    docs        Documentation index: docs/README.md
+
 Examples:
     ./start.sh up
     ./start.sh logs -f
@@ -56,6 +60,8 @@ case "${1:-help}" in
         echo ""
         echo -e "${GREEN}App: http://localhost:8000${NC}"
         echo -e "${GREEN}Docs: http://localhost:8000/docs${NC}"
+        echo -e "${GREEN}Project docs: docs/README.md${NC}"
+        echo -e "${GREEN}Project overview: README.md${NC}"
         ;;
     down)
         echo -e "${GREEN}Stopping services...${NC}"
