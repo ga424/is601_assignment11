@@ -6,6 +6,7 @@ This project provides a FastAPI calculation service with PostgreSQL persistence,
 
 - [Project docs](docs/README.md)
 - [Architecture diagrams](docs/C4_ARCHITECTURE.md)
+- [Project reflection](REFLECTION.md)
 - [Helper script](start.sh)
 
 ## What it does
